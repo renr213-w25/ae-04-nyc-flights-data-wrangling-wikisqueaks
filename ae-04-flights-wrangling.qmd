@@ -14,8 +14,7 @@ library(nycflights13)
 
 **Your turn:** Fill in the blanks:
 
-The `flights` data frame has \_\_\_ rows.
-Each row represents a \_\_\_.
+The `flights` data frame has `{r} nrow(flights)` rows. Each row represents a *flight that left New York City in 2013.*.
 
 ## Exercise 2
 
@@ -25,6 +24,8 @@ Each row represents a \_\_\_.
 #| label: column-names
 
 # add code here
+names(flights)
+
 ```
 
 ## Exercise 3 - `select()`
@@ -34,7 +35,10 @@ Each row represents a \_\_\_.
 ```{r}
 #| label: select-vars
 
-# add code here
+# add code her
+flights |>
+  select(dep_delay,arr_delay)
+
 ```
 
 -   Make a data frame that keeps every variable except `dep_delay`.
@@ -43,6 +47,9 @@ Each row represents a \_\_\_.
 #| label: exclude-vars
 
 # add code here
+flights |>
+  select(-dep_delay)
+
 ```
 
 -   Make a data frame that includes all variables between `year` through `dep_delay` (inclusive). These are all variables that provide information about the departure of each flight.
@@ -51,14 +58,21 @@ Each row represents a \_\_\_.
 #| label: include-range
 
 # add code here
+flights |>
+  select(year:dep_delay)
+
 ```
 
--   Use the `select` helper `contains()` to make a data frame that includes the variables associated with the arrival, i.e., contains the string `"arr\_"` in the name.
+-   Use the `select` helper `contains()` to make a data frame that includes the variables associated with the arrival, i.e., contains the string `"arr_"` in the name.
 
 ```{r}
 #| label: arr-vars
 
 # add code here
+
+flights |>
+  select(contains("arr_"))
+
 ```
 
 ## Exercise 4 - `slice()`
@@ -69,6 +83,9 @@ Each row represents a \_\_\_.
 #| label: slice
 
 # add code here
+flights |> 
+  slice_head(n=5)
+
 ```
 
 -   Display the last two rows of the `flights` data frame.
@@ -77,6 +94,8 @@ Each row represents a \_\_\_.
 #| label: last-two
 
 # add code here
+flights |> 
+  slice_tail(n=2)
 ```
 
 ## Exercise 5 - `arrange()`
@@ -87,11 +106,14 @@ Each row represents a \_\_\_.
 #| label: arrange-delays
 
 # add code here
+flights |>
+  arrange(dep_delay)
+
 ```
 
 -   Question: What does it mean for the `dep_delay` to have a negative value?
 
-Add your response here.
+These flights left early: their departure time is before their scheduled departure time.
 
 -   Arrange the data by descending departure delay, so the flights with the longest departure delays will be at the top.
 
@@ -99,6 +121,8 @@ Add your response here.
 #| label: arrange-delays-desc
 
 # add code here
+flights |>
+  arrange(desc(dep_delay))
 ```
 
 -   **Your turn:** Create a data frame that only includes the plane tail number (`tailnum`), carrier (`carrier`), and departure delay for the flight with the longest departure delay. What is the plane tail number (`tailnum`) for this flight?
@@ -107,6 +131,10 @@ Add your response here.
 #| label: longest-delay
 
 # add code here
+flights |>
+  arrange(dep_delay) |>
+  select(tailnum, carrier, dep_delay) |>
+  slice_head(n=1)
 ```
 
 ## Exercise 6 - `filter()`
@@ -117,6 +145,8 @@ Add your response here.
 #| label: rdu
 
 # add code here
+flights |>
+  filter(dest == "RDU")
 ```
 
 -   Filter for all rows where the destination airport is RDU and the arrival delay is less than 0.
@@ -125,11 +155,13 @@ Add your response here.
 #| label: rdu-ontime
 
 # add code here
+flights |>
+  filter(dest == "RDU" & arr_delay < 0)
 ```
 
 -   **Your turn:** Describe what the code is doing in words.
 
-Add response here.
+It's loading the `flights` dataframe and passing it to the filter function. The filter function is then checking each row for whether its `dest` variable has the value of "RDU" or "GSO" **AND** whether it left or arrived early. All rows that meet these logically conditions are included in the output. In other words, it must be destined for RDU/GSO, and either have arrived early, left early, or both.
 
 ```{r}
 #| label: nc-early
@@ -167,6 +199,8 @@ flights |>
 #| label: count-dest
 
 # add code here
+flights |>
+  count(dest)
 ```
 
 -   In which month was there the fewest number of flights? How many flights were there in that month?
@@ -175,7 +209,12 @@ flights |>
 #| label: count-month
 
 # add code here
+flights |>
+  count(month) |>
+  arrange(n) |>
+  slice_head(n = 1)
 ```
+The fewest flights were in February. There were 24,951 flights.
 
 -   **Your turn:** On which date (month + day) was there the largest number of flights? How many flights were there on that day?
 
@@ -183,7 +222,11 @@ flights |>
 #| label: count-date
 
 # add code here
+flights |>
+  count(month, day, sort = TRUE) |>
+  slice_head(n=1)
 ```
+The day with the most flights was November 27. There were 1014 flights that day.
 
 ## Exercise 8 - `mutate()`
 
@@ -193,6 +236,10 @@ flights |>
 #| label: calculate-mph
 
 # add code here
+flights |>
+  mutate(mph = distance / (air_time / 60 )) |> 
+  select(tailnum, mph)
+
 ```
 
 -   **Your turn:** First, count the number of flights each month, and then calculate the proportion of flights in each month. What proportion of flights take place in July?
@@ -201,15 +248,31 @@ flights |>
 #| label: months-prop
 
 # add code here
+#
+
+flights |> 
+  count(month) |>
+  mutate(prop_flights = n / 336776) %>%
+  filter(month == 7)
+
 ```
+8.7% of flights took place in July.
 
 -   Create a new variable, `rdu_bound`, which indicates whether the flight is to RDU or not. Then, for each departure airport (`origin`), calculate what proportion of flights originating from that airport are to RDU.
 
 ```{r}
 #| label: rdu-origin-prop
-
 # add code here
+flights |> 
+  mutate(rdu_bound = (dest == "RDU")) |> 
+  count(origin, rdu_bound) |> 
+  group_by(origin) |> 
+  mutate(prop = n / sum(n))
+  
 ```
+EWR$\to$RDU: 1.2%.\newline
+JFK$\to$RDU: 2.7%.\newline
+LGA$\to$RDU: 3.4%.\newline
 
 ## Exercise 9 - `summarize()`
 
@@ -219,7 +282,11 @@ flights |>
 #| label: find-arrival-delay
 
 # add code here
+flights |> 
+  summarise(mean_arr_delay = mean(arr_delay, na.rm = TRUE))
+
 ```
+The mean delay is about 7 minutes.
 
 ## Exercise 10 - `group_by()`
 
@@ -229,6 +296,9 @@ flights |>
 #| label: mean-arr-delay-month
 
 # add code here
+flights |> 
+  group_by(month) |> 
+  summarize(mean_month_arr_delay = mean(arr_delay, na.rm = TRUE))
 ```
 
 -   **Your turn:** What is the median departure delay for each airports around NYC (`origin`)? Which airport has the shortest median departure delay?
@@ -237,7 +307,12 @@ flights |>
 #| label: median-dep-dely-origin
 
 # add code here
+flights |>
+  group_by(origin) %>%
+  summarize(med_dep_delay = median(dep_delay, na.rm = TRUE))
+
 ```
+LGA's median delay is the "shortest", with half of all flights from there departing 3 or more minutes early. 
 
 # Additional Practice
 
